@@ -3,9 +3,9 @@
     "modid": "groups",
     "name": "Groups",
     "authors": [
-        "Unknown"
+        "Chronicle Studios"
     ],
-    "description": "To be added",
+    "description": "Overhaul of the game group machanic, adds standings, and allows interactions to effect standings.",
     "version": "1.0.0",
     "dependencies": {
         "game": ""

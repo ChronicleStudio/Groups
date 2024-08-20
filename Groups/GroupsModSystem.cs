@@ -1,4 +1,5 @@
 ﻿using Groups.Commands;
+using Groups.GUI;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
@@ -19,14 +20,16 @@ namespace Groups
         public override void StartServerSide(ICoreServerAPI api)
         {
             base.StartServerSide(api);
-            api.Logger.Notification("Hello from template mod server side: " + Lang.Get("groups:hello"));
+            api.Logger.Notification("Hello from Groups mod server side: " + Lang.Get("groups:hello"));
             AddCommands.run(api);
             
         }
 
         public override void StartClientSide(ICoreClientAPI api)
         {
-            api.Logger.Notification("Hello from template mod client side: " + Lang.Get("groups:hello"));
+            base.StartClientSide(api);
+            new PlayersGUI(api);
+            api.Logger.Notification("Hello from Groups mod client side: " + Lang.Get("groups:hello"));
         }
 
     }
