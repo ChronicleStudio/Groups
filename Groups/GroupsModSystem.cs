@@ -1,4 +1,5 @@
-﻿using Vintagestory.API.Client;
+﻿using Groups.Commands;
+using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Server;
@@ -17,7 +18,10 @@ namespace Groups
 
         public override void StartServerSide(ICoreServerAPI api)
         {
+            base.StartServerSide(api);
             api.Logger.Notification("Hello from template mod server side: " + Lang.Get("groups:hello"));
+            AddCommands.run(api);
+            
         }
 
         public override void StartClientSide(ICoreClientAPI api)
