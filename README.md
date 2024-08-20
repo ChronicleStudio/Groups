@@ -1,5 +1,5 @@
 # Development Steps
-~~0. Cteate Commands for use in testing.~~
+0. ~~Cteate Commands for use in testing.~~
 1. Code the display infrastructure to display a static rating variable.
 2. Make it so that that the static variable is now stored on the server per player.
 3. Create the methods for the increasing and decreasing the variables.
