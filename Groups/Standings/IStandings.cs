@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Groups.Standings
 {
-    internal interface IStandings
+    public interface IStandings
     {
         double Standings { get; }
 

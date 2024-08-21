@@ -1,13 +1,10 @@
 ﻿using Groups.Standings;
+using Groups.Standings.Client;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
-using Vintagestory.API.Server;
 
 namespace Groups.GUI
 {
@@ -33,6 +30,8 @@ namespace Groups.GUI
 
             capi.Event.PlayerJoin += UpdateList;
             capi.Event.PlayerLeave += UpdateList;
+
+            capi.Event.RegisterGameTickListener((args) => { UpdateList(); }, 30000);
         }
         private void SetupDialog()
         {
@@ -40,7 +39,7 @@ namespace Groups.GUI
 
             // Just a simple 300x100 pixel box with 40 pixels top spacing for the title bar
             ElementBounds textBounds = ElementBounds.Fixed(0, 40, 300, 100);
-            
+
             // Background boundaries. Again, just make it fit it's child elements, then add the text as a child element
             ElementBounds bgBounds = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding);
             bgBounds.BothSizing = ElementSizing.FitToChildren;
@@ -65,11 +64,12 @@ namespace Groups.GUI
 
         private bool ToggleGUI(KeyCombination comb)
         {
+
             page = comb.Ctrl ? 0 : page;
             sort = comb.Ctrl && !comb.Shift ? Utilities.IncrementSort(sort) : sort;
             sortModifier = comb.Ctrl && comb.Shift ? Utilities.IncrementSortModifier(sortModifier) : sortModifier;
             _ = !comb.Ctrl && comb.Shift ?
-                IsOpened() ? TryClose() : TryOpen():
+                IsOpened() ? TryClose() : TryOpen() :
                 IsOpened() ? TryOpen() : TryOpen();
             return true;
         }
@@ -98,20 +98,20 @@ namespace Groups.GUI
         }
 
 
-        public string GeneratateDisplayText ()
+        public string GeneratateDisplayText()
         {
             List<KeyValuePair<IPlayer, IStandings>> standings = SortStandings(PlayersStandings.GetAllPlayersStandings(capi));
-            String result = "Players (" + standings.Count + ")" 
-                + (standings.Count > DisplayQTY ? "<font align=\"center\">Page " + (page+1) + " of " + Math.Ceiling((double)standings.Count / DisplayQTY) + "</font>" : "" ) 
+            String result = "Players (" + standings.Count + ")"
+                + (standings.Count > DisplayQTY ? "<font align=\"center\">Page " + (page + 1) + " of " + Math.Ceiling((double)standings.Count / DisplayQTY) + "</font>" : "")
                 + "<font align=\"right\">Standing</font><br><br>";
 
             foreach (KeyValuePair<IPlayer, IStandings> standing in GetPage(standings))
             {
                 result += standing.Key.PlayerName;
                 string color;
-                if (standing.Value.Standings < -0.30) 
-                { 
-                    color = GUIColors.RED; 
+                if (standing.Value.Standings < -0.30)
+                {
+                    color = GUIColors.RED;
                 }
                 else if (standing.Value.Standings > 0.30)
                 {
@@ -121,7 +121,7 @@ namespace Groups.GUI
                 {
                     color = GUIColors.YELLOW;
                 }
-                result += "<font align=\"right\" color=\"" + color + "\">" + String.Format("{0:0.00}",standing.Value.Standings) + "</font>";
+                result += "<font align=\"right\" color=\"" + color + "\">" + String.Format("{0:0.00}", standing.Value.Standings) + "</font>";
                 result += "<br>";
             }
 
@@ -157,11 +157,11 @@ namespace Groups.GUI
             {
                 case Sort.Player:
                     _standings = standings.OrderBy(standing => standing.Key.PlayerName).ToList();
-                    _standings = sortModifier == SortModifier.Ascending ? _standings : Reverse(_standings); 
+                    _standings = sortModifier == SortModifier.Ascending ? _standings : Reverse(_standings);
                     break;
                 case Sort.Standing:
                     _standings = standings.OrderBy(standing => standing.Value.Standings).ToList();
-                    _standings = sortModifier == SortModifier.Ascending ? Reverse(_standings) : _standings; 
+                    _standings = sortModifier == SortModifier.Ascending ? Reverse(_standings) : _standings;
                     break;
                 default:
                     _standings = sortModifier == SortModifier.Ascending ? standings : Reverse(standings);
