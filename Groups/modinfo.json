@@ -1,13 +1,14 @@
 {
-    "type": "code",
-    "modid": "groups",
-    "name": "Groups",
-    "authors": [
-        "Chronicle Studios"
-    ],
-    "description": "Overhaul of the game group machanic, adds standings, and allows interactions to effect standings.",
-    "version": "1.0.0",
-    "dependencies": {
-        "game": ""
-    }
+	"type": "code",
+	"modid": "groups",
+	"name": "Groups",
+	"authors": [
+		"Chronicle Studios",
+		"Saruan The White"
+	],
+	"description": "Overhaul of the game group machanic, adds standings, and allows interactions to effect standings.",
+	"version": "1.0.0",
+	"dependencies": {
+		"game": ""
+	}
 }
