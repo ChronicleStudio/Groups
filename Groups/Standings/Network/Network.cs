@@ -1,5 +1,6 @@
 ﻿using Groups.API;
 using Groups.Standings.Client;
+using ProtoBuf;
 using System;
 using System.Collections.Generic;
 using Vintagestory.API.Client;
@@ -10,7 +11,6 @@ using static Groups.Standings.Network.Utilites;
 
 namespace Groups.Standings.Network
 {
-
 
 	/// <summary>
 	/// A basic example of client<->server networking using a custom network communication
@@ -57,6 +57,7 @@ namespace Groups.Standings.Network
 		ICoreClientAPI capi;
 
 		#endregion
+
 		#region Client
 		private Dictionary<string, PlayerStandings> standings;
 		public Dictionary<string, PlayerStandings> Standings
@@ -111,5 +112,34 @@ namespace Groups.Standings.Network
 		public Dictionary<string, PlayerStandings> GetStandings() { return Standings; }
 
 		#endregion
+
+		#region Utilites
+
+	}
+
+	internal class Utilites
+	{
+		[ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
+		public class NetworkApiClientRequest
+		{
+			public Requests message;
+		}
+
+		[ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
+		public class NetworkApiServerUpdate
+		{
+			public string response;
+			public bool isFullDictionary;
+			public bool isInvalidRequest;
+			public byte[] StandingsDict;
+		}
+	}
+	public enum Requests
+	{
+		FULL_DICTIONARY,
+		RECENT_CHANGES,
+
+		#endregion
+
 	}
 }
