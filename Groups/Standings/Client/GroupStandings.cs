@@ -1,6 +1,7 @@
 ﻿namespace Groups.Standings.Client
 {
-	internal class GroupsStandings
+	public class GroupStandings
 	{
+
 	}
 }
