@@ -1,5 +1,4 @@
 ﻿using Groups.API;
-using Groups.Standings.Client;
 using ProtoBuf;
 using System;
 using System.Collections.Generic;
@@ -7,9 +6,9 @@ using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Server;
 using Vintagestory.API.Util;
-using static Groups.Standings.Network.Utilites;
+using static Groups.GUI.Network.Utilites;
 
-namespace Groups.Standings.Network
+namespace Groups.GUI.Network
 {
 
 	/// <summary>
@@ -59,15 +58,15 @@ namespace Groups.Standings.Network
 		#endregion
 
 		#region Client
-		private Dictionary<string, PlayerStandings> standings;
-		public Dictionary<string, PlayerStandings> Standings
+		private Dictionary<string, sbyte?> standings;
+		public Dictionary<string, sbyte?> Standings
 		{
 			get
 			{
 				if (standings == null)
 				{
 					capi.Network.GetChannel(channelName).SendPacket(new NetworkApiClientRequest() { message = Requests.FULL_DICTIONARY });
-					return new Dictionary<string, PlayerStandings>();
+					return new Dictionary<string, sbyte?>();
 				}
 
 				return standings;
@@ -96,11 +95,11 @@ namespace Groups.Standings.Network
 			if (networkMessage.StandingsDict == null) return;
 			if (networkMessage.isFullDictionary)
 			{
-				Standings = SerializerUtil.Deserialize<Dictionary<string, PlayerStandings>>(networkMessage.StandingsDict);
+				Standings = SerializerUtil.Deserialize<Dictionary<string, sbyte?>>(networkMessage.StandingsDict);
 			}
 			else
 			{
-				foreach (KeyValuePair<string, PlayerStandings> standing in SerializerUtil.Deserialize<Dictionary<string, PlayerStandings>>(networkMessage.StandingsDict))
+				foreach (KeyValuePair<string, sbyte?> standing in SerializerUtil.Deserialize<Dictionary<string, sbyte?>>(networkMessage.StandingsDict))
 				{
 					Standings.Remove(standing.Key);
 					Standings.Add(standing.Key, standing.Value);
@@ -109,7 +108,7 @@ namespace Groups.Standings.Network
 			}
 		}
 
-		public Dictionary<string, PlayerStandings> GetStandings() { return Standings; }
+		public Dictionary<string, sbyte?> GetStandings() { return Standings; }
 
 		#endregion
 

@@ -1,5 +1,6 @@
 ﻿using Groups.API.Exceptions;
-using Groups.Standings.Client;
+using Groups.API.Group;
+using Groups.API.IO;
 using System;
 using System.Collections.Generic;
 using Vintagestory.API.Common;
@@ -38,36 +39,27 @@ namespace Groups.API
 			public void IncreaseStanding(string ofPlayerUID, Queue<KeyValuePair<string, sbyte>> changes) { throw new NotImplementedException(); }
 			public void DecreaseStanding(IServerPlayer ofPlayer, IServerPlayer forPlayer, sbyte amount) { throw new NotImplementedException(); }
 			public void DecreaseStanding(string ofPlayerUID, Queue<KeyValuePair<string, sbyte>> changes) { throw new NotImplementedException(); }
-			public PlayerStandings GetStanding(IServerPlayer ofPlayer, IServerPlayer forPlayer)
-			{ return GetStanding(ofPlayer, forPlayer.PlayerUID, out PlayerStandings standings) ? standings : null; }
+			public sbyte? GetStanding(IServerPlayer ofPlayer, IServerPlayer forPlayer)
+			{ return GetStanding(ofPlayer, forPlayer.PlayerUID, out sbyte? standings) ? standings : null; }
 
-			public bool GetStanding(IServerPlayer ofPlayer, string forPlayerUID, out PlayerStandings standings)
+			public bool GetStanding(IServerPlayer ofPlayer, string forPlayerUID, out sbyte? standings)
 			{ return GetAllStandings(ofPlayer).TryGetValue(forPlayerUID, out standings); }
 
-			public Dictionary<string, PlayerStandings> GetAllStandings(IServerPlayer player)
+			public Dictionary<string, sbyte?> GetAllStandings(IServerPlayer player)
 			{ return _PlayerStandingsIO.LoadDictionary(player); }
 
-			public Dictionary<string, PlayerStandings> GetRecentChanges(IServerPlayer player)
+			public Dictionary<string, sbyte?> GetRecentChanges(IServerPlayer player)
 			{ return _PlayerStandingsIO.LoadChanges(player); }
 
-			public void SetStanding(IServerPlayer ofPlayer, Dictionary<string, sbyte> standings)
+			public void SetStanding(IServerPlayer ofPlayer, Dictionary<string, sbyte?> standings)
 			{
-				Dictionary<string, PlayerStandings> newStandings = new();
-				foreach (KeyValuePair<string, sbyte> kvp in standings)
-				{
-					PlayerStandings currentStanding = GetStanding(ofPlayer, sapi.World.PlayerByUid(kvp.Key) as IServerPlayer) ?? new();
-					currentStanding.Standings = kvp.Value;
-					newStandings.Add(kvp.Key, currentStanding);
-				}
-				_PlayerStandingsIO.SaveChanges(ofPlayer, newStandings);
+				_PlayerStandingsIO.SaveChanges(ofPlayer, standings);
 			}
-			public void SetStanding(IServerPlayer ofPlayer, IServerPlayer forPlayer, sbyte value)
+			public void SetStanding(IServerPlayer ofPlayer, IServerPlayer forPlayer, sbyte? value)
 			{
-				PlayerStandings standings = GetStanding(ofPlayer, forPlayer) ?? new();
-				standings.Standings = value;
-				_PlayerStandingsIO.SaveChanges(ofPlayer, new Dictionary<string, PlayerStandings>() { { forPlayer.PlayerUID, standings } });
+				_PlayerStandingsIO.SaveChanges(ofPlayer, new Dictionary<string, sbyte?>() { { forPlayer.PlayerUID, value } });
 			}
-			private void AddPlayer(IServerPlayer ofPlayer, IServerPlayer forPlayer) { if (!GetStanding(ofPlayer, forPlayer.PlayerUID, out PlayerStandings standings)) SetStanding(ofPlayer, forPlayer, 0); }
+			private void AddPlayer(IServerPlayer ofPlayer, IServerPlayer forPlayer) { if (!GetStanding(ofPlayer, forPlayer.PlayerUID, out sbyte? standings)) SetStanding(ofPlayer, forPlayer, 0); }
 			public void AddPlayers(IServerPlayer Player1, IServerPlayer Player2) { AddPlayer(Player1, Player2); AddPlayer(Player2, Player1); }
 		}
 
@@ -126,7 +118,7 @@ namespace Groups.API
 			/// <exception cref="ArgumentNullException">Thrown if the <paramref name="GroupName"/> paramaeter is null or empty.</exception>
 			/// <exception cref="Exception"></exception>
 #nullable enable
-			public GroupProperties? GetGroupProperties(string GroupName)
+			public GroupCore? GetGroupProperties(string GroupName)
 			{
 				if (string.IsNullOrEmpty(GroupName))
 				{
@@ -172,7 +164,7 @@ namespace Groups.API
 				{
 					throw new ArgumentNullException(nameof(PlayerUID), $"'{nameof(PlayerUID)}' cannot be null or empty.");
 				}
-				return GroupProperties.GetRank(GetPlayerStanding(GroupName ?? (GetPlayerGroup(PlayerUID)), PlayerUID));
+				return GroupCore.GetRank(GetPlayerStanding(GroupName ?? (GetPlayerGroup(PlayerUID)), PlayerUID));
 			}
 			/// <summary>
 			/// Get's the title of the player for the specified group, if GroupName is ommited, whill default to the player's group.

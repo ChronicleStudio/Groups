@@ -1,9 +1,11 @@
-﻿using Groups.Standings.Client;
+﻿using Groups.API.Group;
+using Groups.GUI.Network;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Util;
 
 namespace Groups.GUI
 {
@@ -99,35 +101,30 @@ namespace Groups.GUI
 
 		public string GeneratateDisplayText()
 		{
-			List<KeyValuePair<IPlayer, PlayerStandings>> standings = SortStandings(PlayerStandings.GetAllPlayersStandings(capi));
+			List<KeyValuePair<IPlayer, sbyte?>> standings = SortStandings(GetAllPlayersStandings(capi));
 			String result = $"Players ({standings.Count})"
 				+ (standings.Count > DisplayQTY ? $"<font align=\"center\">Page {(page + 1)} of {Math.Ceiling((double)standings.Count / DisplayQTY)}</font>" : "")
 				+ "<font align=\"right\">Standing</font><br><br>";
 
-			foreach (KeyValuePair<IPlayer, PlayerStandings> standing in GetPage(standings))
+			foreach (KeyValuePair<IPlayer, sbyte?> standing in GetPage(standings))
 			{
 				result += standing.Key.PlayerName;
-				string color;
-				if (standing.Value.Standings < -0.30)
+				string color = GroupCore.GetRank(standing.Value) switch
 				{
-					color = GUIColors.RED;
-				}
-				else if (standing.Value.Standings > 0.30)
-				{
-					color = GUIColors.GREEN;
-				}
-				else
-				{
-					color = GUIColors.YELLOW;
-				}
-				result += $"<font align=\"right\" color=\"{color}\">{String.Format("{0:0.00}", (standing.Value.Standings / 100d))}</font><br>";
+					GroupRank.RankW => GUIColors.RED,
+					GroupRank.RankE => GUIColors.ORANGE,
+					GroupRank.RankN => GUIColors.YELLOW,
+					GroupRank.RankA => GUIColors.BLUE,
+					_ => GUIColors.GREEN,
+				};
+				result += $"<font align=\"right\" color=\"{color}\">{String.Format("{0:0.00}", (standing.Value / 100d))}</font><br>";
 			}
 
 			return result;
 		}
-		public List<KeyValuePair<IPlayer, PlayerStandings>> GetPage(List<KeyValuePair<IPlayer, PlayerStandings>> standings)
+		public List<KeyValuePair<IPlayer, sbyte?>> GetPage(List<KeyValuePair<IPlayer, sbyte?>> standings)
 		{
-			List<KeyValuePair<IPlayer, PlayerStandings>> displayStandings;
+			List<KeyValuePair<IPlayer, sbyte?>> displayStandings;
 			if (standings.Count > DisplayQTY)
 			{
 				try { displayStandings = standings.GetRange(page * DisplayQTY, DisplayQTY); }
@@ -148,33 +145,33 @@ namespace Groups.GUI
 			}
 			return displayStandings;
 		}
-		public List<KeyValuePair<IPlayer, PlayerStandings>> SortStandings(List<KeyValuePair<IPlayer, PlayerStandings>> standings) => sort switch
+		public List<KeyValuePair<IPlayer, sbyte?>> SortStandings(List<KeyValuePair<IPlayer, sbyte?>> standings) => sort switch
 		{
 			Sort.Player => sortModifier == SortModifier.Ascending ? standings.OrderBy(standing => standing.Key.PlayerName).ToList() : Reverse(standings.OrderBy(standing => standing.Key.PlayerName).ToList()),
-			Sort.Standing => sortModifier == SortModifier.Ascending ? Reverse(standings.OrderBy(standing => standing.Value.Standings).ToList()) : standings.OrderBy(standing => standing.Value.Standings).ToList(),
+			Sort.Standing => sortModifier == SortModifier.Ascending ? Reverse(standings.OrderBy(standing => standing.Value).ToList()) : standings.OrderBy(standing => standing.Value).ToList(),
 			_ => sortModifier == SortModifier.Ascending ? standings : Reverse(standings),
 		};
-		/*public List<KeyValuePair<IPlayer, PlayersStandings>> SortStandings(List<KeyValuePair<IPlayer, PlayersStandings>> standings)
-		{
-			List<KeyValuePair<IPlayer, PlayersStandings>> _standings;
-			switch (sort)
-			{
-				case Sort.Player:
-					_standings = standings.OrderBy(standing => standing.Key.PlayerName).ToList();
-					_standings = sortModifier == SortModifier.Ascending ? _standings : Reverse(_standings);
-					break;
-				case Sort.Standing:
-					_standings = standings.OrderBy(standing => standing.Value.Standings).ToList();
-					_standings = sortModifier == SortModifier.Ascending ? Reverse(_standings) : _standings;
-					break;
-				default:
-					_standings = sortModifier == SortModifier.Ascending ? standings : Reverse(standings);
-					break;
-			}
-			return _standings;
-		}*/
-
 		private static List<T> Reverse<T>(List<T> standings) { standings.Reverse(); return standings; }
+		public static List<KeyValuePair<IPlayer, sbyte?>> GetAllPlayersStandings(ICoreClientAPI capi)
+		{
+			List<KeyValuePair<IPlayer, sbyte?>> standings = new();
+
+			List<IPlayer> players = capi.World.AllOnlinePlayers.ToList();
+			Dictionary<string, sbyte?> standingsDictionary = capi.ModLoader.GetModSystem<PlayerStandingsNetwork>().GetStandings();
+
+			foreach (IPlayer player in players)
+			{
+
+
+				sbyte? playerStandings = standingsDictionary.Get(player.PlayerUID);
+				if (playerStandings != null)
+				{
+					standings.Add(new KeyValuePair<IPlayer, sbyte?>(player, playerStandings));
+				}
+			}
+
+			return standings;
+		}
 
 	}
 }

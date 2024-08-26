@@ -1,17 +1,16 @@
-﻿using Groups.Standings.Client;
-using Groups.Standings.Network;
+﻿using Groups.GUI.Network;
 using System.Collections.Generic;
 using Vintagestory.API.Server;
 using Vintagestory.API.Util;
 
-namespace Groups.API
+namespace Groups.API.IO
 {
 	internal class PlayerStandingsIO
 	{
 		public ICoreServerAPI sapi;
 		private const string ModDataKey = "PlayersStandingsData";
-		private Dictionary<IServerPlayer, Dictionary<string, PlayerStandings>> Changes;
-		private Dictionary<IServerPlayer, Dictionary<string, PlayerStandings>> Standings;
+		private Dictionary<IServerPlayer, Dictionary<string, sbyte?>> Changes;
+		private Dictionary<IServerPlayer, Dictionary<string, sbyte?>> Standings;
 
 		public PlayerStandingsIO(ICoreServerAPI sapi)
 		{
@@ -19,20 +18,20 @@ namespace Groups.API
 			Changes = new();
 			Standings = new();
 		}
-		public Dictionary<string, PlayerStandings> LoadDictionary(IServerPlayer player) { return LoadDictionary(player, out bool output); }
+		public Dictionary<string, sbyte?> LoadDictionary(IServerPlayer player) { return LoadDictionary(player, out bool output); }
 
-		public Dictionary<string, PlayerStandings> LoadDictionary(IServerPlayer player, out bool doesExist)
+		public Dictionary<string, sbyte?> LoadDictionary(IServerPlayer player, out bool doesExist)
 		{
 			sapi.Logger.Audit($"{player.PlayerName} / {player.PlayerUID} has requested their player standings.");
 
-			if (!Standings.TryGetValue(player, out Dictionary<string, PlayerStandings> standing))
+			if (!Standings.TryGetValue(player, out Dictionary<string, sbyte?> standing))
 			{
 				byte[] data = player.GetModdata(ModDataKey);
-				standing = data == null ? null : SerializerUtil.Deserialize<Dictionary<string, PlayerStandings>>(data);
+				standing = data == null ? null : SerializerUtil.Deserialize<Dictionary<string, sbyte?>>(data);
 				doesExist = data != null;
-				standing ??= new Dictionary<string, PlayerStandings>()
+				standing ??= new Dictionary<string, sbyte?>()
 				{
-					{ player.PlayerUID, new PlayerStandings(0) }
+					{ player.PlayerUID, new sbyte?(0) }
 				};
 				if (!doesExist) SaveChanges(player, standing, true);
 			}
@@ -41,9 +40,9 @@ namespace Groups.API
 			return standing;
 		}
 
-		public Dictionary<string, PlayerStandings> LoadChanges(IServerPlayer player)
+		public Dictionary<string, sbyte?> LoadChanges(IServerPlayer player)
 		{
-			Changes.Remove(player, out Dictionary<string, PlayerStandings> standings);
+			Changes.Remove(player, out Dictionary<string, sbyte?> standings);
 			return standings ?? new();
 		}
 
@@ -53,7 +52,7 @@ namespace Groups.API
 		/// <param name="sapi"></param>
 		/// <param name="player">The player that is prospective of the change.</param>
 		/// <param name="standings">A dictionary of the new current standings of a player, not the change of player.</param>
-		public void SaveChanges(IServerPlayer player, Dictionary<string, PlayerStandings> standings, bool blankData = false)
+		public void SaveChanges(IServerPlayer player, Dictionary<string, sbyte?> standings, bool blankData = false)
 		{
 			// Update the dictionary list needed for when player logs in. 
 			if (blankData)
@@ -61,7 +60,7 @@ namespace Groups.API
 				player.SetModdata(ModDataKey, SerializerUtil.Serialize(standings));
 			}
 			if (standings == null) return;
-			Dictionary<string, PlayerStandings> standingsDirectory = LoadDictionary(player, out bool doesExist);
+			Dictionary<string, sbyte?> standingsDirectory = LoadDictionary(player, out bool doesExist);
 			if (!doesExist)
 			{
 				player.SetModdata(ModDataKey, SerializerUtil.Serialize(standings));
@@ -69,7 +68,7 @@ namespace Groups.API
 				return;
 			}
 
-			foreach (KeyValuePair<string, PlayerStandings> standing in standings)
+			foreach (KeyValuePair<string, sbyte?> standing in standings)
 			{
 				try { standingsDirectory.Remove(standing.Key); }
 				catch { }
@@ -82,7 +81,7 @@ namespace Groups.API
 
 			// Update list of changes, used for fast lookup and retival for the GUI
 
-			bool playerChangesExisted = Changes.TryGetValue(player, out Dictionary<string, PlayerStandings> oldStandings);
+			bool playerChangesExisted = Changes.TryGetValue(player, out Dictionary<string, sbyte?> oldStandings);
 
 			if (!playerChangesExisted || oldStandings == null)
 			{
@@ -90,7 +89,7 @@ namespace Groups.API
 			}
 			else if (standings.Count > oldStandings.Count)
 			{
-				foreach (KeyValuePair<string, PlayerStandings> standing in oldStandings)
+				foreach (KeyValuePair<string, sbyte?> standing in oldStandings)
 				{
 					if (!standings.ContainsKey(standing.Key)) { standings.Add(standing.Key, standing.Value); }
 				}
@@ -98,7 +97,7 @@ namespace Groups.API
 			}
 			else
 			{
-				foreach (KeyValuePair<string, PlayerStandings> standing in standings)
+				foreach (KeyValuePair<string, sbyte?> standing in standings)
 				{
 					if (!oldStandings.ContainsKey(standing.Key)) { oldStandings.Add(standing.Key, standing.Value); }
 				}

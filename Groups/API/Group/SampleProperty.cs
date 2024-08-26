@@ -1,6 +1,6 @@
 ﻿using System.Linq;
 
-namespace Groups.API
+namespace Groups.API.Group
 {
 	internal class SampleProperty : IGroupProperty
 	{

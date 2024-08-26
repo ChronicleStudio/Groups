@@ -1,23 +1,26 @@
-﻿using Groups.API;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 
-namespace Groups.Standings.Client
+namespace Groups.API.Group
 {
-	public class GroupProperties
+	public class GroupCore
 	{
+		public string GroupName { get; set; }
 		public List<IGroupProperty> Properties { get; set; }
 		public string[] GroupTitles { get; set; }
 		public bool[] GroupAutoProgress { get; set; }
 
-		public GroupProperties()
+		public Dictionary<string, sbyte> PlayerStandings { get; set; }
+
+		public GroupCore()
 		{
 			GroupTitles = new string[9];
 			GroupAutoProgress = new bool[9];
+			PlayerStandings = new();
 		}
 
-		public String GetRankTitle(GroupRank rank) => rank switch
+		public string GetRankTitle(GroupRank rank) => rank switch
 		{
 			GroupRank.RankW => GroupTitles[0],
 			GroupRank.RankE => GroupTitles[1],
@@ -73,6 +76,27 @@ namespace Groups.Standings.Client
 			_ => throw new InvalidEnumArgumentException()
 		};
 
+		public void SetPlayerRank(string PlayerUID, sbyte standing)
+		{
+			if (string.IsNullOrEmpty(PlayerUID)) throw new ArgumentNullException(nameof(PlayerUID), $"'{nameof(PlayerUID)}' cannot be null or empty.");
+		}
+
+		public string GetPlayerTitle(string PlayerUID) =>
+			GetRankTitle(GetPlayerRank(PlayerUID));
+
+		public GroupRank GetPlayerRank(string PlayerUID) =>
+			GetRank(GetPlayerStanding(PlayerUID));
+
+		public sbyte GetPlayerStanding(string PlayerUID)
+		{
+			if (string.IsNullOrEmpty(PlayerUID)) throw new ArgumentNullException(nameof(PlayerUID), $"'{nameof(PlayerUID)}' cannot be null or empty.");
+			return PlayerStandings.GetValueOrDefault(PlayerUID, (sbyte)0);
+		}
+
+		public static GroupRank GetRank(sbyte? standing)
+		{
+			return standing is null ? GroupRank.RankN : GetRank((sbyte)standing);
+		}
 		public static GroupRank GetRank(sbyte standing)
 		{
 			if (standing is < -100 or > 100) throw new ArgumentOutOfRangeException();

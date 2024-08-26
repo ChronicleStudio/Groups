@@ -20,11 +20,13 @@ namespace Groups.GUI
 
 	}
 
-	class GUIColors
+	static class GUIColors
 	{
-		public const string RED = "#FF0000";
-		public const string GREEN = "#00FF00";
-		public const string YELLOW = "#FFFF00";
+		public static string RED = "#FF0000";
+		public static string ORANGE = "#FF8800";
+		public static string YELLOW = "#FFFF00";
+		public static string BLUE = "#00FFFF";
+		public static string GREEN = "#00FF00";
 	}
 	enum SortModifier
 	{

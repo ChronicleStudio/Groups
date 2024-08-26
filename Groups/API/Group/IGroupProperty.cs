@@ -1,4 +1,4 @@
-﻿namespace Groups.API
+﻿namespace Groups.API.Group
 {
 	public interface IGroupProperty
 	{

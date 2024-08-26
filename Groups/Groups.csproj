@@ -56,10 +56,6 @@
 		<Content Include="modinfo.json">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
-	</ItemGroup>
-
-	<ItemGroup>
-		<Folder Include="Standings\Server\" />
 	</ItemGroup>	
 	
 </Project>
