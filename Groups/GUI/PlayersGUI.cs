@@ -109,7 +109,7 @@ namespace Groups.GUI
 			foreach (KeyValuePair<IPlayer, sbyte?> standing in GetPage(standings))
 			{
 				result += standing.Key.PlayerName;
-				string color = GroupCore.GetRank(standing.Value) switch
+				string color = GroupSettings.GetRank(standing.Value) switch
 				{
 					GroupRank.RankW => GUIColors.RED,
 					GroupRank.RankE => GUIColors.ORANGE,

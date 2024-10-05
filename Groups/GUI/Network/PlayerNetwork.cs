@@ -6,7 +6,7 @@ using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Server;
 using Vintagestory.API.Util;
-using static Groups.GUI.Network.Utilites;
+using static Groups.GUI.Network.PlayerUtilites;
 
 namespace Groups.GUI.Network
 {
@@ -39,7 +39,7 @@ namespace Groups.GUI.Network
 
 		public static void SendClinetUpdate(ICoreServerAPI sapi, IServerPlayer fromPlayer)
 		{
-			if (sapi != null) { sapi.ModLoader.GetModSystem<PlayerStandingsNetwork>().OnClientMessage(fromPlayer, new NetworkApiClientRequest() { message = Requests.RECENT_CHANGES }); }
+			sapi?.ModLoader.GetModSystem<PlayerStandingsNetwork>().OnClientMessage(fromPlayer, new NetworkApiClientRequest() { message = Requests.RECENT_CHANGES });
 		}
 
 		private void OnClientMessage(IServerPlayer fromPlayer, NetworkApiClientRequest networkMessage)
@@ -52,12 +52,13 @@ namespace Groups.GUI.Network
 			};
 			serverChannel.SendPacket(nasu, fromPlayer);
 		}
-		IClientNetworkChannel clientChannel;
-		ICoreClientAPI capi;
 
 		#endregion
 
 		#region Client
+
+		IClientNetworkChannel clientChannel;
+		ICoreClientAPI capi;
 		private Dictionary<string, sbyte?> standings;
 		public Dictionary<string, sbyte?> Standings
 		{
@@ -81,9 +82,9 @@ namespace Groups.GUI.Network
 		{
 			capi = api;
 
-			clientChannel = api.Network.GetChannel(channelName)
+			clientChannel = capi.Network.GetChannel(channelName)
 				.SetMessageHandler<NetworkApiServerUpdate>(OnServerMessage);
-			api.Event.RegisterGameTickListener((args) => { capi.Network.GetChannel(channelName).SendPacket(new NetworkApiClientRequest() { message = Requests.FULL_DICTIONARY }); }, 1000 * 60 * 5);
+			capi.Event.RegisterGameTickListener((args) => { capi.Network.GetChannel(channelName).SendPacket(new NetworkApiClientRequest() { message = Requests.FULL_DICTIONARY }); }, 1000 * 60 * 5);
 		}
 
 		private void OnServerMessage(NetworkApiServerUpdate networkMessage)
@@ -116,7 +117,7 @@ namespace Groups.GUI.Network
 
 	}
 
-	internal class Utilites
+	internal class PlayerUtilites
 	{
 		[ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
 		public class NetworkApiClientRequest

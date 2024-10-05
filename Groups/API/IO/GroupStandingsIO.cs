@@ -1,12 +1,17 @@
-﻿using System;
+﻿using Groups.API.Group;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Vintagestory.API.Server;
 
 namespace Groups.API.IO
 {
 	internal class GroupStandingsIO
 	{
+
+		internal static List<GroupStandings> LoadStandings(ICoreServerAPI sapi)
+		{
+			return new();
+			throw new NotImplementedException();
+		}
 	}
 }

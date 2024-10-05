@@ -1,27 +1,30 @@
-﻿namespace Groups.API.Group
+﻿using ProtoBuf;
+
+namespace Groups.API.Group
 {
+	[ProtoContract()]
 	public interface IGroupProperty
 	{
 		/// <summary>
 		/// The modid for the mod registering the property.
 		/// </summary>
-		public string ModID { get; set; }
+		public static readonly string ModID;
 		/// <summary>
 		/// The Property ID provided by the mod adding the property, this should be a unique value within the mod itself.
 		/// </summary>
-		public string PropertyID { get; set; }
+		public static readonly string PropertyID;
 		/// <summary>
 		/// A generated Unique ID for the property provided once the property is registerd. This is only used to lookup the value using the API.
 		/// </summary>
-		public string UID { get; set; }
+		public int UID { get; set; }
 		/// <summary>
 		/// The Name that should be displayed on the GUI.
 		/// </summary>
-		public string Name { get; set; }
+		public static readonly string Name;
 		/// <summary>
 		/// The discription that should be displayed on the tool tip when the player hovers over the property.
 		/// </summary>
-		public string Description { get; set; }
+		public static readonly string Description;
 		/// <summary>
 		/// The Value of this property that would be set once the player configures their group, this value is returned through the API.
 		/// </summary>
@@ -33,6 +36,9 @@
 		/// <param name="groupName">The name of the group that is changing the value.</param>
 		/// <param name="newValue">The proposed new value for the property.</param>
 		/// <returns>The true or false value for weither or not the imput is valid.</returns>
-		public bool IsValueValid(GroupsAPI gapi, string groupName, string newValue);
+		public bool IsValueValid(GroupsAPI gapi, int groupUID, string newValue);
+
+		public string GetDefaultValue(GroupsAPI gapi, int groupUID);
 	}
+
 }

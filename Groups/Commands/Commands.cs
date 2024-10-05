@@ -1,4 +1,5 @@
 ﻿using Groups.API;
+using Groups.API.Exceptions;
 using System;
 using System.Linq;
 using Vintagestory.API.Common;
@@ -8,10 +9,108 @@ namespace Groups.Commands
 {
 	public static class AddCommands
 	{
-		public static void run(ICoreServerAPI api)
+		public static void run(ICoreServerAPI sapi)
 		{
-			new StandingsPlayer(api);
-			new StandingsGroup(api);
+			new StandingsPlayer(sapi);
+
+			var gapi = sapi.ModLoader.GetModSystem<GroupsAPI>();
+			sapi.ChatCommands.GetOrCreate("groups")
+				.RequiresPrivilege(Privilege.chat)
+				.RequiresPlayer()
+				.BeginSub("set")
+				.WithDescription("An Assortment of Set commands to set values within the groups system.")
+				.BeginSubs("PlayerGroup")
+				.EndSub()
+				.BeginSub("PlayerRank")
+				.EndSub()
+				.BeginSub("PlayerTitle")
+				.EndSub()
+				.BeginSub("GroupTitles")
+				.EndSub()
+				.BeginSub("PlayerStanding")
+				.EndSub()
+				.BeginSub("PropertyValue")
+				.EndSub()
+				.EndSub()
+				.BeginSub("get")
+				.WithDescription("An Assortment of Get commands to get values within the groups system.")
+				.BeginSubs("PlayerGroup")
+				.WithArgs(new WordArgParser("PlayerName", false))
+				.HandleWith(Handler((args) =>
+				{
+					String PlayerName = (args?[0] as string) ?? args.Caller.GetName();
+					IServerPlayer Player = sapi.World.AllPlayers.ToList().Find(player => player.PlayerName == args[0] as string) as IServerPlayer;
+					return $"{Player?.PlayerName ?? PlayerName} is apart of group id {gapi.Group.GetPlayerGroup(Player?.PlayerUID ?? PlayerName)}";
+				}))
+				.EndSub()
+				.BeginSub("PlayerRank")
+				.WithArgs(new ICommandArgumentParser[] { new IntArgParser("GroupUID", 0, Int32.MaxValue, 0, false), new WordArgParser("PlayerName", false) })
+				.HandleWith(Handler((args) =>
+				{
+					String PlayerName = (args?[1] as string) ?? args.Caller.GetName();
+					IServerPlayer Player = sapi.World.AllPlayers.ToList().Find(player => player.PlayerName == args[1] as string) as IServerPlayer;
+					return $"{Player?.PlayerName ?? PlayerName} is apart of group id {gapi.Group.GetPlayerRank(Player?.PlayerUID ?? PlayerName, (int)args?[0])}";
+				}))
+				.EndSub()
+				.BeginSub("PlayerTitle")
+				.WithArgs(new ICommandArgumentParser[] { new IntArgParser("GroupUID", 0, Int32.MaxValue, 0, false), new WordArgParser("PlayerName", false) })
+				.HandleWith(Handler((args) =>
+				{
+					String PlayerName = (args?[1] as string) ?? args.Caller.GetName();
+					IServerPlayer Player = sapi.World.AllPlayers.ToList().Find(player => player.PlayerName == args[1] as string) as IServerPlayer;
+					return $"{Player?.PlayerName ?? PlayerName} is apart of group id {gapi.Group.GetPlayerTitle(Player?.PlayerUID ?? PlayerName, (int)args?[0])}";
+				}))
+				.EndSub()
+				.BeginSub("PlayerStanding")
+				.WithArgs(new ICommandArgumentParser[] { new IntArgParser("GroupUID", 0, Int32.MaxValue, 0, true), new WordArgParser("PlayerName", false) })
+				.HandleWith(Handler((args) =>
+				{
+					String PlayerName = (args?[1] as string) ?? args.Caller.GetName();
+					IServerPlayer Player = sapi.World.AllPlayers.ToList().Find(player => player.PlayerName == args[1] as string) as IServerPlayer;
+					return $"{Player?.PlayerName ?? PlayerName} is apart of group id {gapi.Group.GetPlayerStanding((int)args[0], Player?.PlayerUID ?? PlayerName)}";
+				}))
+				.EndSub()
+				.BeginSub("GroupTitles")
+				.WithArgs(new IntArgParser("Group UID", 0, Int32.MaxValue, 0, true))
+				.HandleWith(Handler((args) => { return $"[{String.Join(", ", gapi.Group.GetGroupTitles((int)args[0]))}]"; }))
+				.EndSub()
+				.BeginSub("PropertyValue")
+				.WithArgs(new ICommandArgumentParser[] { new IntArgParser("Proptery UID", 0, Int32.MaxValue, 0, true), new IntArgParser("Group UID", 0, Int32.MaxValue, 0, true) })
+				.HandleWith(Handler((args) => { return $"[{String.Join(", ", gapi.Group.GetPropertyValue((int)args[0], (int)args[1]).ToString())}]"; }))
+				.EndSub()
+				.EndSub()
+				.BeginSub("dump")
+				.WithDescription("Dumps the value of the selected group to the chat box.")
+#if DEBUG
+				.WithArgs(new IntArgParser("Group UID", 0, Int32.MaxValue, -1, false))
+				.HandleWith(Handler((args) =>
+				{
+					if (args[0] is null or <= -1) return gapi.Group.DumpGroups();
+#else
+				.WithArgs(new IntArgParser("Group UID", 0, Int32.MaxValue, -1, true))
+				.HandleWith(Handler((args) =>
+				{
+#endif
+					return gapi.Group.GetGroupSettings((int)args[0]).ToString();
+				}));
+		}
+		public delegate string HandlerDelegate(TextCommandCallingArgs args);
+		public static OnCommandDelegate Handler(HandlerDelegate hd)
+		{
+			return (args) =>
+			{
+				try
+				{
+					return TextCommandResult.Success(hd(args));
+				}
+				catch (InvalidGroupUID ex) { return TextCommandResult.Error("Invalid Group UID: ", ex.ToString()); }
+				catch (InvalidPlayerUID ex) { return TextCommandResult.Error("Invalid Player UID: ", ex.ToString()); }
+				catch (InvalidPropertyUID ex) { return TextCommandResult.Error("Invalid Property UID: ", ex.ToString()); }
+				catch (ArgumentException ex) { return TextCommandResult.Error("Invalid Argument: ", ex.ToString()); }
+				catch (InvalidProperty ex) { return TextCommandResult.Error("Invalid Prooprtery: Should not be possible...", ex.ToString()); }
+				catch (LoadIncompleteException ex) { return TextCommandResult.Error("LoadIncomplete: Should not be possible...", ex.ToString()); }
+				catch (Exception ex) { return TextCommandResult.Error("Unknon Error: ", ex.ToString()); }
+			};
 		}
 	}
 	internal abstract class Command
@@ -86,19 +185,7 @@ namespace Groups.Commands
 			catch (Exception e) { return TextCommandResult.Error("Unknown Error while saving. Exception Type: " + e.GetType().Name); }
 		}
 	}
-	class StandingsGroup : Command
-	{
-		private const string _name = "standings";
-		private const string _description = "Sets the standings of target group to value specified.";
-		private static readonly string _privilege = Privilege.chat;
-		private const string _subName = "group";
-		public StandingsGroup(ICoreServerAPI api) : base(api, _name, _description, _privilege, _subName) { }
-		public override TextCommandResult run(TextCommandCallingArgs args)
-		{
-			throw new System.NotImplementedException();
-		}
-	}
-
 }
+
 
 

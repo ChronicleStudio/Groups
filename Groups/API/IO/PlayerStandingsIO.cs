@@ -8,9 +8,10 @@ namespace Groups.API.IO
 	internal class PlayerStandingsIO
 	{
 		public ICoreServerAPI sapi;
-		private const string ModDataKey = "PlayersStandingsData";
+#pragma warning disable IDE0044 // Add readonly modifier
 		private Dictionary<IServerPlayer, Dictionary<string, sbyte?>> Changes;
 		private Dictionary<IServerPlayer, Dictionary<string, sbyte?>> Standings;
+#pragma warning restore IDE0044 // Add readonly modifier
 
 		public PlayerStandingsIO(ICoreServerAPI sapi)
 		{
@@ -18,15 +19,15 @@ namespace Groups.API.IO
 			Changes = new();
 			Standings = new();
 		}
-		public Dictionary<string, sbyte?> LoadDictionary(IServerPlayer player) { return LoadDictionary(player, out bool output); }
+		public Dictionary<string, sbyte?> LoadDictionary(IServerPlayer player) { return LoadDictionary(player, out _); }
 
 		public Dictionary<string, sbyte?> LoadDictionary(IServerPlayer player, out bool doesExist)
 		{
-			sapi.Logger.Audit($"{player.PlayerName} / {player.PlayerUID} has requested their player standings.");
+			sapi.ModLoader.GetModSystem<GroupsAPI>().Logger.Audit($"{player.PlayerName} / {player.PlayerUID} has requested their player standings.");
 
 			if (!Standings.TryGetValue(player, out Dictionary<string, sbyte?> standing))
 			{
-				byte[] data = player.GetModdata(ModDataKey);
+				byte[] data = CommonIO.ReadPlayerData(sapi, player, "Player");
 				standing = data == null ? null : SerializerUtil.Deserialize<Dictionary<string, sbyte?>>(data);
 				doesExist = data != null;
 				standing ??= new Dictionary<string, sbyte?>()
@@ -57,13 +58,13 @@ namespace Groups.API.IO
 			// Update the dictionary list needed for when player logs in. 
 			if (blankData)
 			{
-				player.SetModdata(ModDataKey, SerializerUtil.Serialize(standings));
+				CommonIO.WritePlayerData(sapi, player, "Player", SerializerUtil.Serialize(standings), jData: standings);
 			}
 			if (standings == null) return;
 			Dictionary<string, sbyte?> standingsDirectory = LoadDictionary(player, out bool doesExist);
 			if (!doesExist)
 			{
-				player.SetModdata(ModDataKey, SerializerUtil.Serialize(standings));
+				CommonIO.WritePlayerData(sapi, player, "Player", SerializerUtil.Serialize(standings), jData: standings);
 				Standings.Add(player, standingsDirectory);
 				return;
 			}
@@ -74,7 +75,7 @@ namespace Groups.API.IO
 				catch { }
 				standingsDirectory.Add(standing.Key, standing.Value);
 			}
-			player.SetModdata(ModDataKey, SerializerUtil.Serialize(standingsDirectory));
+			CommonIO.WritePlayerData(sapi, player, "Player", SerializerUtil.Serialize(standings), jData: standings);
 			Standings.Remove(player);
 			Standings.Add(player, standingsDirectory);
 
